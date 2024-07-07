@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/videoPlayerFragment">
+
+    <fragment
+        android:id="@+id/videoPlayerFragment"
+        android:name="com.adempolat.tvlivestreamapp.VideoPlayerFragment"
+        android:label="fragment_video_player"
+        tools:layout="@layout/fragment_video_player" />
+</navigation>
