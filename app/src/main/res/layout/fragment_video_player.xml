@@ -1,17 +1,25 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="horizontal"
     android:background="@color/black"
     tools:context=".VideoPlayerFragment">
 
-    <!-- Dikey mod düzeni -->
-    <LinearLayout
-        android:id="@+id/vertical_layout"
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/btn_fullscreen_prev"
+        android:layout_width="40dp"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:visibility="visible">
+        android:background="#80000000"
+        android:text="◄"
+        android:textColor="#FFFFFF"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
 
         <SurfaceView
             android:id="@+id/surface_view"
@@ -22,6 +30,7 @@
             android:layout_marginBottom="8dp" />
 
         <LinearLayout
+            android:id="@+id/arrowChannels"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -53,36 +62,14 @@
             android:layout_weight="1"
             android:layout_alignParentBottom="true"
             android:layout_marginTop="8dp"/>
+
     </LinearLayout>
 
-    <!-- Yatay mod düzeni -->
-    <FrameLayout
-        android:id="@+id/horizontal_layout"
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/btn_fullscreen_next"
+        android:layout_width="40dp"
         android:layout_height="match_parent"
-        android:visibility="gone">
-
-        <SurfaceView
-            android:id="@+id/surface_view_fullscreen"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <Button
-            android:id="@+id/btn_fullscreen_prev"
-            android:layout_width="40dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="start|center_vertical"
-            android:background="#80000000"
-            android:text="◄"
-            android:textColor="#FFFFFF"/>
-
-        <Button
-            android:id="@+id/btn_fullscreen_next"
-            android:layout_width="40dp"
-            android:layout_height="match_parent"
-            android:layout_gravity="end|center_vertical"
-            android:background="#80000000"
-            android:text="►"
-            android:textColor="#FFFFFF"/>
-    </FrameLayout>
-</FrameLayout>
+        android:background="#80000000"
+        android:text="►"
+        android:textColor="#FFFFFF"/>
+</LinearLayout>

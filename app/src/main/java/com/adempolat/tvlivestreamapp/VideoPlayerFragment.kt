@@ -5,6 +5,8 @@ import android.content.res.Configuration
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.SurfaceHolder
 import android.view.View
@@ -25,6 +27,8 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
     private val PREFS_NAME = "tv_prefs"
     private val KEY_CHANNEL_INDEX = "channel_index"
     private val KEY_POSITION = "position"
+    private val handler = Handler(Looper.getMainLooper())
+    private val hideButtonsRunnable = Runnable { hideFullscreenButtons() }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -70,6 +74,7 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
                 saveCurrentChannelIndex()
                 playChannel(channelList[currentChannelIndex].url)
             }
+            hideButtonsAfterDelay()
         }
 
         binding.btnFullscreenNext.setOnClickListener {
@@ -78,6 +83,12 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
                 saveCurrentChannelIndex()
                 playChannel(channelList[currentChannelIndex].url)
             }
+            hideButtonsAfterDelay()
+        }
+
+        binding.surfaceView.setOnClickListener {
+            showFullscreenButtons()
+            hideButtonsAfterDelay()
         }
 
         checkLastPlayedChannel()
@@ -175,18 +186,13 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
     private fun updateLayoutForOrientation(orientation: Int) {
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
             enterFullScreen()
+            binding.arrowChannels.visibility = View.GONE
             binding.recyclerView.visibility = View.GONE
-            binding.btnPlayPause.visibility = View.GONE
-            binding.btnPrev.visibility = View.GONE
-            binding.btnNext.visibility = View.GONE
-            binding.btnFullscreenPrev.visibility = View.VISIBLE
-            binding.btnFullscreenNext.visibility = View.VISIBLE
+            hideFullscreenButtons()
         } else {
             exitFullScreen()
+            binding.arrowChannels.visibility = View.VISIBLE
             binding.recyclerView.visibility = View.VISIBLE
-            binding.btnPlayPause.visibility = View.VISIBLE
-            binding.btnPrev.visibility = View.VISIBLE
-            binding.btnNext.visibility = View.VISIBLE
             binding.btnFullscreenPrev.visibility = View.GONE
             binding.btnFullscreenNext.visibility = View.GONE
         }
@@ -205,6 +211,21 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         activity?.window?.decorView?.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
     }
 
+    private fun showFullscreenButtons() {
+        binding.btnFullscreenPrev.visibility = View.VISIBLE
+        binding.btnFullscreenNext.visibility = View.VISIBLE
+    }
+
+    private fun hideFullscreenButtons() {
+        binding.btnFullscreenPrev.visibility = View.GONE
+        binding.btnFullscreenNext.visibility = View.GONE
+    }
+
+    private fun hideButtonsAfterDelay() {
+        handler.removeCallbacks(hideButtonsRunnable)
+        handler.postDelayed(hideButtonsRunnable, 5000)
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         updateLayoutForOrientation(newConfig.orientation)
@@ -213,11 +234,14 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
     override fun onDestroyView() {
         super.onDestroyView()
         releasePlayer()
+        handler.removeCallbacks(hideButtonsRunnable)
         _binding = null
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         mediaPlayer?.setDisplay(holder)
+        mediaPlayer?.seekTo(currentPosition)
+        mediaPlayer?.start()
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
