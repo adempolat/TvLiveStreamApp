@@ -19,6 +19,7 @@ val channelList = listOf(
     Channel("Habertürk", "https://ciner-live.daioncdn.net/haberturktv/haberturktv.m3u8"),
     Channel("Haber Global", "https://haberglobal.blutv.com/blutv_haberglobal2/live.m3u8"),
     Channel("TRT Spor", "https://tv-trtspor1.medya.trt.com.tr/master.m3u8"),
+    Channel("Bein Spor", "https://ythls.armelin.one/channel/UCPe9vNjHF1kEExT5kHwc7aw.m3u8"),
     Channel("A Spor", "https://new.cache-stream.workers.dev/stream/UCJElRTCNEmLemgirqvsW63Q/live.m3u8"),
     Channel("FB TV", "https://1hskrdto.rocketcdn.com/fenerbahcetv.smil/playlist.m3u8"),
     Channel("GS TV", "https://owifavo5.rocketcdn.com/gstv/gstv.smil/master.m3u8"),
@@ -35,8 +36,16 @@ val channelList = listOf(
     Channel("Power Türk", "https://live.artidijitalmedya.com/artidijital_powerturktv/powerturktv/playlist.m3u8"),
     Channel("Number1 Türk", "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/broadcast_5c9e187770143.smil/playlist.m3u8"),
     Channel("Flash TV", "https://flashtv.blutv.com/blutv_flashtv/live.m3u8"),
-    Channel("CNBC-E TV", "https://new.cache-stream.workers.dev/channel/UCaO-M1dXacMwtyg0Pvovk4w/live.m3u8\n"),
+    Channel("CNBC-E TV", "https://new.cache-stream.workers.dev/channel/UCaO-M1dXacMwtyg0Pvovk4w/live.m3u8"),
     Channel("TBMM TV", "https://meclistv-live.ercdn.net/meclistv/meclistv.m3u8"),
+    Channel("TV Net", "https://mn-nl.mncdn.com/tvnet/tvnet/playlist.m3u8"),
+    Channel("D Max", "https://dogus-live.daioncdn.net/dmax/dmax.m3u8"),
+    Channel("TLC", "https://dogus-live.daioncdn.net/tlc/tlc.m3u8"),
+    Channel("Show Max", "https://raw.githubusercontent.com/ipstreet312/freeiptv/master/ressources/tur/shmax.m3u8"),
+    Channel("Ekol Tv", "https://helga.iptv2022.com/sh/ekol_tv/index.m3u8"),
+    Channel("CNBC News", "https://new.cache-stream.workers.dev/stream/UCvJJ_dzjViJCoLf5uKUTwoA/live.m3u8"),
+    Channel("FOX News", "https://fox-foxnewsnow-samsungus.amagi.tv/playlist.m3u8"),
+    Channel("TRT World", "https://tv-trtworld.medya.trt.com.tr/master.m3u8"),
 
     )
 
