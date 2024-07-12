@@ -1,8 +1,12 @@
 package com.adempolat.tvlivestreamapp
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.res.Configuration
 import android.media.MediaPlayer
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.TrafficStats
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -12,7 +16,7 @@ import android.view.SurfaceHolder
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import androidx.appcompat.app.AlertDialog
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -26,11 +30,14 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
     private lateinit var surfaceHolder: SurfaceHolder
     private var currentChannelIndex = 0
     private var currentPosition = 0
+    private var initialRxBytes: Long = 0
+    private var initialTxBytes: Long = 0
     private val PREFS_NAME = "tv_prefs"
     private val KEY_CHANNEL_INDEX = "channel_index"
     private val KEY_POSITION = "position"
     private val handler = Handler(Looper.getMainLooper())
     private val hideButtonsRunnable = Runnable { hideFullscreenButtons() }
+    private var isDialogShown = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -54,36 +61,40 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         }
 
         binding.btnPrev.setOnClickListener {
+            val sortedChannelList = loadChannelOrder()
             if (currentChannelIndex > 0) {
                 currentChannelIndex--
                 saveCurrentChannelIndex()
-                playChannel(channelList[currentChannelIndex].url)
+                playChannel(sortedChannelList[currentChannelIndex].url)
             }
         }
 
         binding.btnNext.setOnClickListener {
-            if (currentChannelIndex < channelList.size - 1) {
+            val sortedChannelList = loadChannelOrder()
+            if (currentChannelIndex < sortedChannelList.size - 1) {
                 currentChannelIndex++
                 saveCurrentChannelIndex()
-                playChannel(channelList[currentChannelIndex].url)
+                playChannel(sortedChannelList[currentChannelIndex].url)
             }
         }
 
         // Fullscreen mode buttons
         binding.btnFullscreenPrev.setOnClickListener {
+            val sortedChannelList = loadChannelOrder()
             if (currentChannelIndex > 0) {
                 currentChannelIndex--
                 saveCurrentChannelIndex()
-                playChannel(channelList[currentChannelIndex].url)
+                playChannel(sortedChannelList[currentChannelIndex].url)
             }
             hideButtonsAfterDelay()
         }
 
         binding.btnFullscreenNext.setOnClickListener {
-            if (currentChannelIndex < channelList.size - 1) {
+            val sortedChannelList = loadChannelOrder()
+            if (currentChannelIndex < sortedChannelList.size - 1) {
                 currentChannelIndex++
                 saveCurrentChannelIndex()
-                playChannel(channelList[currentChannelIndex].url)
+                playChannel(sortedChannelList[currentChannelIndex].url)
             }
             hideButtonsAfterDelay()
         }
@@ -93,8 +104,39 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
             hideButtonsAfterDelay()
         }
 
+        checkInternetConnection()
         checkLastPlayedChannel()
         updateLayoutForOrientation(resources.configuration.orientation)
+        initialRxBytes = TrafficStats.getMobileRxBytes()
+        initialTxBytes = TrafficStats.getMobileTxBytes()
+    }
+
+    private fun checkInternetConnection() {
+        if (!isInternetAvailable(requireContext())) {
+            showNoInternetDialog()
+        }
+    }
+
+    private fun isInternetAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetwork = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+        return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun showNoInternetDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Bağlantı Hatası")
+            .setMessage("İnternet bağlantınız yok. Lütfen bağlantınızı kontrol edin.")
+            .setPositiveButton("Tamam") { dialog, _ ->
+                if (isInternetAvailable(requireContext())) {
+                    dialog.dismiss()
+                } else {
+                    showNoInternetDialog()
+                }
+            }
+            .setCancelable(false)
+            .show()
     }
 
     override fun onResume() {
@@ -102,15 +144,25 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         surfaceHolder = binding.surfaceView.holder
         surfaceHolder.addCallback(this)
         checkLastPlayedChannel()
+        // calculateAndShowDataUsage()
+
     }
 
     override fun onPause() {
         super.onPause()
         currentPosition = mediaPlayer?.currentPosition ?: 0
         saveCurrentChannelPosition()
-        releasePlayer()
-        // Ekranın kararmasını engelleyen flag'i kaldırıyoruz
+        if (activity?.isInPictureInPictureMode != true) {
+            releasePlayer()
+        }
         activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        releasePlayer()
+        handler.removeCallbacks(hideButtonsRunnable)
+        _binding = null
     }
 
     private fun setupRecyclerView() {
@@ -192,27 +244,13 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
     }
 
     private fun checkLastPlayedChannel() {
-        val sharedPref = activity?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val lastChannelIndex = sharedPref?.getInt(KEY_CHANNEL_INDEX, -1) ?: -1
-        if (lastChannelIndex != -1) {
-            showResumeDialog(lastChannelIndex)
+        if (!isDialogShown) {
+            val sharedPref = activity?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val lastChannelIndex = sharedPref?.getInt(KEY_CHANNEL_INDEX, -1) ?: -1
+            if (lastChannelIndex != -1) {
+                //showResumeDialog(lastChannelIndex)
+            }
         }
-    }
-
-    private fun showResumeDialog(lastChannelIndex: Int) {
-        val channelName = channelList[lastChannelIndex].name
-        AlertDialog.Builder(requireContext())
-            .setTitle("Devam Et")
-            .setMessage("Son oynatılan kanal $channelName. Devam etmek ister misiniz?")
-            .setPositiveButton("Evet") { dialog, _ ->
-                currentChannelIndex = lastChannelIndex
-                playChannel(channelList[currentChannelIndex].url)
-                dialog.dismiss()  // Dialogu kapatır
-            }
-            .setNegativeButton("Hayır") { dialog, _ ->
-                dialog.dismiss()  // Dialogu kapatır
-            }
-            .show()
     }
 
     private fun updateLayoutForOrientation(orientation: Int) {
@@ -221,7 +259,6 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
             binding.arrowChannels.visibility = View.GONE
             binding.recyclerView.visibility = View.GONE
             hideFullscreenButtons()
-            // Ekranın kararmasını engelleyen flag'i ekliyoruz
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
             exitFullScreen()
@@ -229,7 +266,6 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
             binding.recyclerView.visibility = View.VISIBLE
             binding.btnFullscreenPrev.visibility = View.GONE
             binding.btnFullscreenNext.visibility = View.GONE
-            // Ekranın kararmasını engelleyen flag'i kaldırıyoruz
             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
@@ -267,12 +303,6 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         updateLayoutForOrientation(newConfig.orientation)
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        releasePlayer()
-        handler.removeCallbacks(hideButtonsRunnable)
-        _binding = null
-    }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         mediaPlayer?.setDisplay(holder)
@@ -286,6 +316,16 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         mediaPlayer?.setDisplay(null)
+    }
+
+    private fun calculateAndShowDataUsage() {
+        val finalRxBytes = TrafficStats.getMobileRxBytes()
+        val finalTxBytes = TrafficStats.getMobileTxBytes()
+
+        val dataUsed = (finalRxBytes - initialRxBytes) + (finalTxBytes - initialTxBytes)
+        val dataUsedInMB = dataUsed / (1024 * 1024)
+
+        Toast.makeText(requireContext(), "Kullanılan Mobil Veri: $dataUsedInMB MB", Toast.LENGTH_LONG).show()
     }
 
     companion object {
