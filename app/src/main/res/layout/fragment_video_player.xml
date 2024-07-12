@@ -6,11 +6,13 @@
     android:background="@color/black"
     tools:context=".VideoPlayerFragment">
 
-    <Button
+    <TextView
         android:id="@+id/btn_fullscreen_prev"
         android:layout_width="40dp"
         android:layout_height="match_parent"
         android:background="#80000000"
+        android:layout_gravity="center"
+        android:gravity="center"
         android:text="◄"
         android:textColor="#FFFFFF"/>
 
@@ -65,11 +67,12 @@
 
     </LinearLayout>
 
-    <Button
+    <TextView
         android:id="@+id/btn_fullscreen_next"
         android:layout_width="40dp"
         android:layout_height="match_parent"
         android:background="#80000000"
         android:text="►"
+        android:gravity="center"
         android:textColor="#FFFFFF"/>
 </LinearLayout>

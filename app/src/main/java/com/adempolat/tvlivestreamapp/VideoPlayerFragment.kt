@@ -11,9 +11,11 @@ import android.view.LayoutInflater
 import android.view.SurfaceHolder
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.ItemTouchHelper
 import com.adempolat.tvlivestreamapp.databinding.FragmentVideoPlayerBinding
 
 class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
@@ -107,14 +109,41 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         currentPosition = mediaPlayer?.currentPosition ?: 0
         saveCurrentChannelPosition()
         releasePlayer()
+        // Ekranın kararmasını engelleyen flag'i kaldırıyoruz
+        activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     private fun setupRecyclerView() {
-        binding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-        binding.recyclerView.adapter = ChannelAdapter(channelList) { channel ->
-            currentChannelIndex = channelList.indexOf(channel)
+        val sortedChannelList = loadChannelOrder()
+        val adapter = ChannelAdapter(sortedChannelList) { channel ->
+            currentChannelIndex = sortedChannelList.indexOf(channel)
             saveCurrentChannelIndex()
             playChannel(channel.url)
+        }
+
+        binding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
+        binding.recyclerView.adapter = adapter
+
+        val callback = ChannelMoveCallback(adapter)
+        val touchHelper = ItemTouchHelper(callback)
+        touchHelper.attachToRecyclerView(binding.recyclerView)
+    }
+
+    private fun loadChannelOrder(): MutableList<Channel> {
+        val sharedPref = activity?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val savedOrder = sharedPref?.getString(KEY_CHANNEL_ORDER, null)
+        return if (savedOrder != null) {
+            val order = savedOrder.split(",")
+            val sortedList = mutableListOf<Channel>()
+            order.forEach { name ->
+                val channel = channelList.find { it.name == name }
+                if (channel != null) {
+                    sortedList.add(channel)
+                }
+            }
+            sortedList
+        } else {
+            channelList.toMutableList()
         }
     }
 
@@ -175,11 +204,14 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         AlertDialog.Builder(requireContext())
             .setTitle("Devam Et")
             .setMessage("Son oynatılan kanal $channelName. Devam etmek ister misiniz?")
-            .setPositiveButton("Evet") { _, _ ->
+            .setPositiveButton("Evet") { dialog, _ ->
                 currentChannelIndex = lastChannelIndex
                 playChannel(channelList[currentChannelIndex].url)
+                dialog.dismiss()  // Dialogu kapatır
             }
-            .setNegativeButton("Hayır", null)
+            .setNegativeButton("Hayır") { dialog, _ ->
+                dialog.dismiss()  // Dialogu kapatır
+            }
             .show()
     }
 
@@ -189,12 +221,16 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
             binding.arrowChannels.visibility = View.GONE
             binding.recyclerView.visibility = View.GONE
             hideFullscreenButtons()
+            // Ekranın kararmasını engelleyen flag'i ekliyoruz
+            activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
             exitFullScreen()
             binding.arrowChannels.visibility = View.VISIBLE
             binding.recyclerView.visibility = View.VISIBLE
             binding.btnFullscreenPrev.visibility = View.GONE
             binding.btnFullscreenNext.visibility = View.GONE
+            // Ekranın kararmasını engelleyen flag'i kaldırıyoruz
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
 
@@ -250,5 +286,10 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         mediaPlayer?.setDisplay(null)
+    }
+
+    companion object {
+        private const val PREFS_NAME = "tv_prefs"
+        private const val KEY_CHANNEL_ORDER = "channel_order"
     }
 }

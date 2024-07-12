@@ -1,6 +1,6 @@
 package com.adempolat.tvlivestreamapp
 
-import android.os.Bundle
+ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.adempolat.tvlivestreamapp.databinding.ActivityMainBinding

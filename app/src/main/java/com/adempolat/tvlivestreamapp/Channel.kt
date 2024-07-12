@@ -46,6 +46,7 @@ val channelList = listOf(
     Channel("CNBC News", "https://new.cache-stream.workers.dev/stream/UCvJJ_dzjViJCoLf5uKUTwoA/live.m3u8"),
     Channel("FOX News", "https://fox-foxnewsnow-samsungus.amagi.tv/playlist.m3u8"),
     Channel("TRT World", "https://tv-trtworld.medya.trt.com.tr/master.m3u8"),
+    Channel("TV 100", "https://tv100-live.daioncdn.net/tv100/tv100.m3u8"),
 
     )
 
