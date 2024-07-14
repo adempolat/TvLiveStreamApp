@@ -16,6 +16,7 @@ import android.view.SurfaceHolder
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.SearchView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -37,7 +38,9 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
     private val KEY_POSITION = "position"
     private val handler = Handler(Looper.getMainLooper())
     private val hideButtonsRunnable = Runnable { hideFullscreenButtons() }
+    private val updateDataUsageRunnable = Runnable { calculateAndShowDataUsage() }
     private var isDialogShown = false
+    private lateinit var channelAdapter: ChannelAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -104,11 +107,24 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
             hideButtonsAfterDelay()
         }
 
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                channelAdapter.filter.filter(newText)
+                return false
+            }
+        })
+
         checkInternetConnection()
         checkLastPlayedChannel()
         updateLayoutForOrientation(resources.configuration.orientation)
         initialRxBytes = TrafficStats.getMobileRxBytes()
         initialTxBytes = TrafficStats.getMobileTxBytes()
+
+        handler.post(updateDataUsageRunnable)
     }
 
     private fun checkInternetConnection() {
@@ -144,8 +160,6 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         surfaceHolder = binding.surfaceView.holder
         surfaceHolder.addCallback(this)
         checkLastPlayedChannel()
-        // calculateAndShowDataUsage()
-
     }
 
     override fun onPause() {
@@ -162,21 +176,22 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         super.onDestroyView()
         releasePlayer()
         handler.removeCallbacks(hideButtonsRunnable)
+        handler.removeCallbacks(updateDataUsageRunnable)
         _binding = null
     }
 
     private fun setupRecyclerView() {
         val sortedChannelList = loadChannelOrder()
-        val adapter = ChannelAdapter(sortedChannelList) { channel ->
+        channelAdapter = ChannelAdapter(sortedChannelList) { channel ->
             currentChannelIndex = sortedChannelList.indexOf(channel)
             saveCurrentChannelIndex()
             playChannel(channel.url)
         }
 
-        binding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-        binding.recyclerView.adapter = adapter
+        binding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
+        binding.recyclerView.adapter = channelAdapter
 
-        val callback = ChannelMoveCallback(adapter)
+        val callback = ChannelMoveCallback(channelAdapter)
         val touchHelper = ItemTouchHelper(callback)
         touchHelper.attachToRecyclerView(binding.recyclerView)
     }
@@ -258,12 +273,14 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
             enterFullScreen()
             binding.arrowChannels.visibility = View.GONE
             binding.recyclerView.visibility = View.GONE
+            binding.searchView.visibility = View.GONE
             hideFullscreenButtons()
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
             exitFullScreen()
             binding.arrowChannels.visibility = View.VISIBLE
             binding.recyclerView.visibility = View.VISIBLE
+            binding.searchView.visibility = View.VISIBLE
             binding.btnFullscreenPrev.visibility = View.GONE
             binding.btnFullscreenNext.visibility = View.GONE
             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -302,7 +319,6 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         super.onConfigurationChanged(newConfig)
         updateLayoutForOrientation(newConfig.orientation)
     }
-
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         mediaPlayer?.setDisplay(holder)

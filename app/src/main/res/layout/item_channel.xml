@@ -17,10 +17,10 @@
         android:id="@+id/channel_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="6dp"
+        android:layout_margin="2dp"
         android:fontFamily="@font/mada"
-        android:padding="8dp"
-        android:textSize="18sp"
+        android:padding="2dp"
+        android:textSize="15sp"
         android:textStyle="bold" />
 </LinearLayout>
 </androidx.cardview.widget.CardView>
