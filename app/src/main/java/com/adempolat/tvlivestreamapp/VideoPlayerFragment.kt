@@ -143,7 +143,7 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
     private fun showNoInternetDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Bağlantı Hatası")
-            .setMessage("İnternet bağlantınız yok. Lütfen bağlantınızı kontrol edin.")
+            .setMessage("İnternet bağlandcvcfvcvctınız yok. Lütfen bağlantınızı kontrol edin.")
             .setPositiveButton("Tamam") { dialog, _ ->
                 if (isInternetAvailable(requireContext())) {
                     dialog.dismiss()
@@ -341,7 +341,7 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
         val dataUsed = (finalRxBytes - initialRxBytes) + (finalTxBytes - initialTxBytes)
         val dataUsedInMB = dataUsed / (1024 * 1024)
 
-        Toast.makeText(requireContext(), "Kullanılan Mobil Veri: $dataUsedInMB MB", Toast.LENGTH_LONG).show()
+        //Toast.makeText(requireContext(), "Kullanılan Mobil Veri: $dataUsedInMB MB", Toast.LENGTH_LONG).show()
     }
 
     companion object {
