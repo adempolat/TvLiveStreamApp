@@ -143,7 +143,7 @@ class VideoPlayerFragment : Fragment(), SurfaceHolder.Callback {
     private fun showNoInternetDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Bağlantı Hatası")
-            .setMessage("İnternet bağlandcvcfvcvctınız yok. Lütfen bağlantınızı kontrol edin.")
+            .setMessage("İnternet bağlantınız yok. Lütfen bağlantınızı kontrol edin.")
             .setPositiveButton("Tamam") { dialog, _ ->
                 if (isInternetAvailable(requireContext())) {
                     dialog.dismiss()
